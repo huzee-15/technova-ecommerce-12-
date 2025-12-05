@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Models;
 using technova_ecommerce.Models.Entities;
 
@@ -17,6 +18,35 @@ namespace technova_ecommerce.Controllers
         {
             return View();
         }
+        [HttpPost]
+        public async Task<IActionResult> Login(User user)
+        {
+            if (ModelState.IsValid)
+            {
+                if (_db.Users.Any(u => u.UserName == user.UserName))
+                {
+                    var loggedinUser = await _db.Users.FirstOrDefaultAsync(u => u.UserName.Equals(user.UserName));
+                    if (loggedinUser != null && BCrypt.Net.BCrypt.Verify(user.HashedPassword, loggedinUser.HashedPassword))
+                    {
+                        return RedirectToAction("Index", "Home");
+                    }
+                    else
+                    {
+                        ViewBag.Error = "Incorrect Password.";
+                        return View(user);
+                    }
+                }
+                else
+                {
+                    ViewBag.Error = "User does not exist.";
+                    return View(user);
+                }
+            }
+
+           
+            return View(user);
+        }
+
 
         public IActionResult Register()
         {
